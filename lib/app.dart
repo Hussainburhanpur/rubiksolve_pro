@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/app_theme.dart';
-import 'screens/home_screen.dart';
+import 'screens/home/home_screen.dart';
 
 class RubikSolveApp extends StatelessWidget {
   const RubikSolveApp({super.key});
@@ -11,9 +11,7 @@ class RubikSolveApp extends StatelessWidget {
     return MaterialApp(
       title: 'RubikSolve Pro',
       debugShowCheckedModeBanner: false,
-
       theme: AppTheme.darkTheme,
-
       home: const HomeScreen(),
     );
   }
