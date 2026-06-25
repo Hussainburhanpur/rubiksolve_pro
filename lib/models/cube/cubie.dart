@@ -1,41 +1,33 @@
-import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart';
 
 import 'cube_face.dart';
 
 class Cubie {
-  final int x;
-  final int y;
-  final int z;
+  Vector3 position;
 
-  final Map<CubeFace, Color> stickers;
+  Matrix4 orientation;
+
+  final Map<CubeFace, CubeColor> stickers;
 
   Cubie({
-    required this.x,
-    required this.y,
-    required this.z,
+    required this.position,
+    required this.orientation,
     required this.stickers,
   });
 
-  bool hasFace(CubeFace face) => stickers.containsKey(face);
-
-  Color? getColor(CubeFace face) => stickers[face];
-
-  Cubie copyWith({
-    int? x,
-    int? y,
-    int? z,
-    Map<CubeFace, Color>? stickers,
-  }) {
+  Cubie copy() {
     return Cubie(
-      x: x ?? this.x,
-      y: y ?? this.y,
-      z: z ?? this.z,
-      stickers: stickers ?? Map.from(this.stickers),
+      position: position.clone(),
+      orientation: orientation.clone(),
+      stickers: Map<CubeFace, CubeColor>.from(stickers),
     );
   }
 
-  @override
-  String toString() {
-    return 'Cubie(x: $x, y: $y, z: $z)';
+  bool hasFace(CubeFace face) {
+    return stickers.containsKey(face);
+  }
+
+  CubeColor? colorOf(CubeFace face) {
+    return stickers[face];
   }
 }
