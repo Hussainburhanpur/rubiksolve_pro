@@ -1,110 +1,128 @@
 import 'package:flutter/material.dart';
 
+import '../solver/solver_screen.dart';
+import '../scanner/scanner_screen.dart';
+import '../learn/learn_screen.dart';
+import '../playback/playback_screen.dart';
+import '../statistics/statistics_screen.dart';
+import '../settings/settings_screen.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("RubikSolve Pro"),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 20),
+  void _open(BuildContext context, Widget page) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => page),
+    );
+  }
 
-              const Icon(
-                Icons.view_in_ar,
-                size: 100,
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                "RubikSolve Pro",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              const Text(
-                "Professional Rubik's Cube Solver",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              _menuButton(
-                icon: Icons.play_arrow_rounded,
-                title: "Solve Cube",
-              ),
-
-              const SizedBox(height: 16),
-
-              _menuButton(
-                icon: Icons.camera_alt_rounded,
-                title: "Scan Cube",
-              ),
-
-              const SizedBox(height: 16),
-
-              _menuButton(
-                icon: Icons.school_rounded,
-                title: "Learn Algorithms",
-              ),
-
-              const SizedBox(height: 16),
-
-              _menuButton(
-                icon: Icons.slideshow_rounded,
-                title: "Solution Playback",
-              ),
-
-              const SizedBox(height: 16),
-
-              _menuButton(
-                icon: Icons.bar_chart_rounded,
-                title: "Statistics",
-              ),
-
-              const SizedBox(height: 16),
-
-              _menuButton(
-                icon: Icons.settings_rounded,
-                title: "Settings",
-              ),
-            ],
+  Widget buildButton(
+    BuildContext context,
+    IconData icon,
+    String title,
+    Widget page,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: SizedBox(
+        width: double.infinity,
+        height: 70,
+        child: ElevatedButton.icon(
+          onPressed: () => _open(context, page),
+          icon: Icon(icon, size: 28),
+          label: Text(
+            title,
+            style: const TextStyle(fontSize: 22),
           ),
         ),
       ),
     );
   }
 
-  Widget _menuButton({
-    required IconData icon,
-    required String title,
-  }) {
-    return SizedBox(
-      height: 60,
-      child: ElevatedButton.icon(
-        onPressed: () {},
-        icon: Icon(icon),
-        label: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: ListView(
+            children: [
+
+              const SizedBox(height: 10),
+
+              const Icon(
+                Icons.view_in_ar,
+                size: 110,
+              ),
+
+              const SizedBox(height: 20),
+
+              const Center(
+                child: Text(
+                  "RubikSolve Pro",
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              const Center(
+                child: Text(
+                  "Professional Rubik's Cube Solver",
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 35),
+
+              buildButton(
+                context,
+                Icons.play_arrow,
+                "Solve Cube",
+                const SolverScreen(),
+              ),
+
+              buildButton(
+                context,
+                Icons.camera_alt,
+                "Scan Cube",
+                const ScannerScreen(),
+              ),
+
+              buildButton(
+                context,
+                Icons.school,
+                "Learn Algorithms",
+                const LearnScreen(),
+              ),
+
+              buildButton(
+                context,
+                Icons.smart_display,
+                "Solution Playback",
+                const PlaybackScreen(),
+              ),
+
+              buildButton(
+                context,
+                Icons.bar_chart,
+                "Statistics",
+                const StatisticsScreen(),
+              ),
+
+              buildButton(
+                context,
+                Icons.settings,
+                "Settings",
+                const SettingsScreen(),
+              ),
+            ],
           ),
         ),
       ),
