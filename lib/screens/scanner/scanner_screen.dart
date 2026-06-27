@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:rubiksolve_pro/widgets/scanner_overlay.dart';
 import 'package:rubiksolve_pro/widgets/scanner_mask.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -14,6 +15,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   CameraController? _controller;
   bool _loading = true;
   bool _flash = false;
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -22,23 +24,43 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   Future<void> _initializeCamera() async {
-    final cameras = await availableCameras();
+  final cameras = await availableCameras();
 
-    _controller = CameraController(
-      cameras.first,
-      ResolutionPreset.high,
-      enableAudio: false,
-    );
+  _controller = CameraController(
+    cameras.first,
+    ResolutionPreset.medium,
+    enableAudio: false,
+    imageFormatGroup: ImageFormatGroup.yuv420,
+  );
 
-    await _controller!.initialize();
+  await _controller!.initialize();
 
-    if (!mounted) return;
+  await _controller!.startImageStream((CameraImage image) {
 
-    setState(() {
-      _loading = false;
-    });
-  }
+  if (_isProcessing) return;
 
+  _isProcessing = true;
+
+  _processFrame(image);
+
+});
+
+  if (!mounted) return;
+
+  setState(() {
+    _loading = false;
+  });
+}
+
+Future<void> _processFrame(CameraImage image) async {
+  debugPrint(
+    "Processing Frame : ${image.width} x ${image.height}",
+  );
+
+  await Future.delayed(const Duration(milliseconds: 50));
+
+  _isProcessing = false;
+}
   Future<void> _toggleFlash() async {
     if (_controller == null) return;
 
@@ -50,12 +72,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     setState(() {});
   }
-
   @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
+void dispose() {
+  if (_controller != null &&
+      _controller!.value.isStreamingImages) {
+    _controller!.stopImageStream();
   }
+
+  _controller?.dispose();
+  super.dispose();
+}
 
   Widget _buildGrid() {
     return AspectRatio(
