@@ -1,6 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-
+import 'package:rubiksolve_pro/widgets/face_progress.dart';
 import 'package:rubiksolve_pro/scanner/color_classifier.dart';
 import 'package:rubiksolve_pro/scanner/color_sampler.dart';
 import 'package:rubiksolve_pro/scanner/frame_processor.dart';
@@ -147,6 +147,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
 
           const ScannerMask(),
+
+          Positioned(
+            top: 10,
+            left: 0,
+            right: 0,
+            child: FaceProgress(
+              scannedFaces: 1,
+            ),
+          ),
 
           ScannerOverlay(
             detected: true,
