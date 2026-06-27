@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:rubiksolve_pro/widgets/scanner_overlay.dart';
 import 'package:rubiksolve_pro/widgets/scanner_mask.dart';
+import 'package:rubiksolve_pro/scanner/frame_processor.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
@@ -57,7 +58,13 @@ Future<void> _processFrame(CameraImage image) async {
     "Processing Frame : ${image.width} x ${image.height}",
   );
 
-  await Future.delayed(const Duration(milliseconds: 50));
+  final frame = FrameProcessor.process(image);
+
+if (frame != null) {
+  debugPrint(
+  "Frame Ready : ${frame.width} x ${frame.height}",
+);
+}
 
   _isProcessing = false;
 }
@@ -83,30 +90,6 @@ void dispose() {
   super.dispose();
 }
 
-  Widget _buildGrid() {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 9,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-        ),
-        itemBuilder: (_, index) {
-          return Container(
-            margin: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.white,
-                width: 3,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-          );
-        },
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -136,15 +119,11 @@ void dispose() {
             child: CameraPreview(_controller!),
           ),
           const ScannerMask(),
-          const ScannerOverlay(),
 
-          Center(
-            child: SizedBox(
-              width: 300,
-              height: 300,
-              child: _buildGrid(),
-            ),
+          const ScannerOverlay(
+            detected: true,
           ),
+
 
           Positioned(
             bottom: 40,

@@ -4,9 +4,11 @@ class ScannerOverlay extends StatelessWidget {
   const ScannerOverlay({
     super.key,
     this.size = 260,
+    this.detected = false,
   });
 
   final double size;
+  final bool detected;
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +18,9 @@ class ScannerOverlay extends StatelessWidget {
           width: size,
           height: size,
           child: CustomPaint(
-            painter: ScannerOverlayPainter(),
+            painter: ScannerOverlayPainter(
+              detected: detected,
+            ),
           ),
         ),
       ),
@@ -25,6 +29,12 @@ class ScannerOverlay extends StatelessWidget {
 }
 
 class ScannerOverlayPainter extends CustomPainter {
+  ScannerOverlayPainter({
+    required this.detected,
+  });
+
+  final bool detected;
+
   @override
   void paint(Canvas canvas, Size size) {
     const double radius = 18;
@@ -33,7 +43,7 @@ class ScannerOverlayPainter extends CustomPainter {
 
     final Paint borderPaint =
         Paint()
-          ..color = Colors.white
+          ..color = detected ? Colors.green : Colors.white
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2;
 
@@ -47,7 +57,9 @@ class ScannerOverlayPainter extends CustomPainter {
 
     final Paint gridPaint =
         Paint()
-          ..color = Colors.white.withValues(alpha: 0.9)
+          ..color = (detected ? Colors.green : Colors.white).withValues(
+            alpha: 0.9,
+          )
           ..strokeWidth = 1.2;
 
     final double thirdX = size.width / 3;
@@ -73,9 +85,32 @@ class ScannerOverlayPainter extends CustomPainter {
       );
     }
 
+    final Paint samplePaint =
+    Paint()
+      ..color = Colors.redAccent
+      ..style = PaintingStyle.fill;
+
+      final double cellW = size.width / 3;
+      final double cellH = size.height / 3;
+
+      for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 3; col++) {
+          canvas.drawCircle(
+            Offset(
+              cellW * col + cellW / 2,
+              cellH * row + cellH / 2,
+            ),
+            4,
+            samplePaint,
+          );
+        }
+      }
+
     final Paint cornerPaint =
         Paint()
-          ..color = const Color(0xFF3B82F6)
+          ..color = detected
+              ? Colors.green
+              : const Color(0xFF3B82F6)
           ..strokeWidth = 3
           ..strokeCap = StrokeCap.round;
 
@@ -137,6 +172,6 @@ class ScannerOverlayPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant ScannerOverlayPainter oldDelegate) {
-    return false;
+    return oldDelegate.detected != detected;
   }
 }
