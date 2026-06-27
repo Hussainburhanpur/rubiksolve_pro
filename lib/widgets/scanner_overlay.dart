@@ -5,10 +5,12 @@ class ScannerOverlay extends StatelessWidget {
     super.key,
     this.size = 260,
     this.detected = false,
+    required this.sampleColors,
   });
 
   final double size;
   final bool detected;
+  final List<Color> sampleColors;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +22,7 @@ class ScannerOverlay extends StatelessWidget {
           child: CustomPaint(
             painter: ScannerOverlayPainter(
               detected: detected,
+              sampleColors: sampleColors,
             ),
           ),
         ),
@@ -31,9 +34,11 @@ class ScannerOverlay extends StatelessWidget {
 class ScannerOverlayPainter extends CustomPainter {
   ScannerOverlayPainter({
     required this.detected,
+    required this.sampleColors,
   });
 
   final bool detected;
+  final List<Color> sampleColors;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -41,11 +46,10 @@ class ScannerOverlayPainter extends CustomPainter {
 
     final Rect rect = Offset.zero & size;
 
-    final Paint borderPaint =
-        Paint()
-          ..color = detected ? Colors.green : Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
+    final Paint borderPaint = Paint()
+      ..color = detected ? Colors.green : Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -55,64 +59,58 @@ class ScannerOverlayPainter extends CustomPainter {
       borderPaint,
     );
 
-    final Paint gridPaint =
-        Paint()
-          ..color = (detected ? Colors.green : Colors.white).withValues(
-            alpha: 0.9,
-          )
-          ..strokeWidth = 1.2;
+    final Paint gridPaint = Paint()
+      ..color = (detected ? Colors.green : Colors.white).withValues(alpha: 0.9)
+      ..strokeWidth = 1.2;
 
     final double thirdX = size.width / 3;
     final double thirdY = size.height / 3;
 
-    for (int index = 1; index < 3; index++) {
-      final double x = thirdX * index;
+    for (int i = 1; i < 3; i++) {
+      canvas.drawLine(
+        Offset(thirdX * i, 0),
+        Offset(thirdX * i, size.height),
+        gridPaint,
+      );
 
       canvas.drawLine(
-        Offset(x, 0),
-        Offset(x, size.height),
+        Offset(0, thirdY * i),
+        Offset(size.width, thirdY * i),
         gridPaint,
       );
     }
 
-    for (int index = 1; index < 3; index++) {
-      final double y = thirdY * index;
+    final double cellW = size.width / 3;
+    final double cellH = size.height / 3;
 
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        gridPaint,
-      );
-    }
+    for (int row = 0; row < 3; row++) {
+      for (int col = 0; col < 3; col++) {
+        final int index = row * 3 + col;
 
-    final Paint samplePaint =
-    Paint()
-      ..color = Colors.redAccent
-      ..style = PaintingStyle.fill;
+        final Color color =
+            index < sampleColors.length
+                ? sampleColors[index]
+                : Colors.red;
 
-      final double cellW = size.width / 3;
-      final double cellH = size.height / 3;
+        final Paint samplePaint = Paint()
+          ..color = color
+          ..style = PaintingStyle.fill;
 
-      for (int row = 0; row < 3; row++) {
-        for (int col = 0; col < 3; col++) {
-          canvas.drawCircle(
-            Offset(
-              cellW * col + cellW / 2,
-              cellH * row + cellH / 2,
-            ),
-            4,
-            samplePaint,
-          );
-        }
+        canvas.drawCircle(
+          Offset(
+            cellW * col + cellW / 2,
+            cellH * row + cellH / 2,
+          ),
+          6,
+          samplePaint,
+        );
       }
+    }
 
-    final Paint cornerPaint =
-        Paint()
-          ..color = detected
-              ? Colors.green
-              : const Color(0xFF3B82F6)
-          ..strokeWidth = 3
-          ..strokeCap = StrokeCap.round;
+    final Paint cornerPaint = Paint()
+      ..color = detected ? Colors.green : const Color(0xFF3B82F6)
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
 
     const double offset = 8;
     const double length = 20;
@@ -172,6 +170,7 @@ class ScannerOverlayPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant ScannerOverlayPainter oldDelegate) {
-    return oldDelegate.detected != detected;
+    return oldDelegate.detected != detected ||
+        oldDelegate.sampleColors != sampleColors;
   }
 }

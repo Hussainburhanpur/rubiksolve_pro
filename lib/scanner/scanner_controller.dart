@@ -1,42 +1,67 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
+import 'frame_processor.dart';
+import 'color_sampler.dart';
+import 'color_classifier.dart';
+import 'stability_filter.dart';
+import 'face_detector.dart';
+
 class ScannerController extends ChangeNotifier {
-  CameraController? cameraController;
+  final StabilityFilter _stabilityFilter = StabilityFilter();
 
-  bool isInitialized = false;
-  bool isFlashOn = false;
-  bool isProcessing = false;
+  List<Color> sampleColors = List.generate(
+    9,
+    (_) => Colors.grey,
+  );
 
-  Future<void> initialize() async {
-    final cameras = await availableCameras();
+  bool detected = false;
 
-    cameraController = CameraController(
-      cameras.first,
-      ResolutionPreset.high,
-      enableAudio: false,
-      imageFormatGroup: ImageFormatGroup.yuv420,
+  Future<void> process(CameraImage image) async {
+    final frame = FrameProcessor.process(image);
+
+    if (frame == null) return;
+
+    final sampled = ColorSampler.sample3x3(
+      frame,
+      Rect.fromCenter(
+        center: Offset(
+          frame.width / 2,
+          frame.height / 2,
+        ),
+        width: frame.width * 0.35,
+        height: frame.width * 0.35,
+      ),
     );
 
-    await cameraController!.initialize();
+    final classified =
+        ColorClassifier.classifyAll(sampled);
 
-    isInitialized = true;
+    final stable =
+        _stabilityFilter.add(classified);
+
+    if (stable == null) return;
+
+    final face = FaceDetector.detect(stable);
+
+    if (!face.valid) return;
+
+    sampleColors = face.colors;
+    detected = true;
+
     notifyListeners();
   }
 
-  Future<void> toggleFlash() async {
-    if (cameraController == null) return;
+  void reset() {
+    detected = false;
 
-    isFlashOn = !isFlashOn;
-
-    await cameraController!.setFlashMode(
-      isFlashOn ? FlashMode.torch : FlashMode.off,
+    sampleColors = List.generate(
+      9,
+      (_) => Colors.grey,
     );
 
-    notifyListeners();
-  }
+    _stabilityFilter.reset();
 
-  Future<void> disposeCamera() async {
-    await cameraController?.dispose();
+    notifyListeners();
   }
 }

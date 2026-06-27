@@ -1,9 +1,13 @@
 import 'package:camera/camera.dart';
-import 'package:rubiksolve_pro/widgets/scanner_overlay.dart';
-import 'package:rubiksolve_pro/widgets/scanner_mask.dart';
-import 'package:rubiksolve_pro/scanner/frame_processor.dart';
 import 'package:flutter/material.dart';
-import 'package:image/image.dart' as img;
+
+import 'package:rubiksolve_pro/scanner/color_classifier.dart';
+import 'package:rubiksolve_pro/scanner/color_sampler.dart';
+import 'package:rubiksolve_pro/scanner/frame_processor.dart';
+import 'package:rubiksolve_pro/scanner/stability_filter.dart';
+
+import 'package:rubiksolve_pro/widgets/scanner_mask.dart';
+import 'package:rubiksolve_pro/widgets/scanner_overlay.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -14,9 +18,17 @@ class ScannerScreen extends StatefulWidget {
 
 class _ScannerScreenState extends State<ScannerScreen> {
   CameraController? _controller;
+
   bool _loading = true;
   bool _flash = false;
   bool _isProcessing = false;
+
+  final StabilityFilter _stabilityFilter = StabilityFilter();
+
+  List<Color> _sampleColors = List.generate(
+    9,
+    (_) => Colors.grey,
+  );
 
   @override
   void initState() {
@@ -25,49 +37,61 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   Future<void> _initializeCamera() async {
-  final cameras = await availableCameras();
+    final cameras = await availableCameras();
 
-  _controller = CameraController(
-    cameras.first,
-    ResolutionPreset.medium,
-    enableAudio: false,
-    imageFormatGroup: ImageFormatGroup.yuv420,
-  );
+    _controller = CameraController(
+      cameras.first,
+      ResolutionPreset.medium,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.yuv420,
+    );
 
-  await _controller!.initialize();
+    await _controller!.initialize();
 
-  await _controller!.startImageStream((CameraImage image) {
+    await _controller!.startImageStream((CameraImage image) {
+      if (_isProcessing) return;
 
-  if (_isProcessing) return;
+      _isProcessing = true;
+      _processFrame(image);
+    });
 
-  _isProcessing = true;
+    if (!mounted) return;
 
-  _processFrame(image);
+    setState(() {
+      _loading = false;
+    });
+  }
 
-});
+  Future<void> _processFrame(CameraImage image) async {
+    final frame = FrameProcessor.process(image);
 
-  if (!mounted) return;
+    if (frame != null) {
+      final sampled = ColorSampler.sample3x3(
+        frame,
+        Rect.fromCenter(
+          center: Offset(
+            frame.width / 2,
+            frame.height / 2,
+          ),
+          width: frame.width * 0.35,
+          height: frame.width * 0.35,
+        ),
+      );
 
-  setState(() {
-    _loading = false;
-  });
-}
+      final classified = ColorClassifier.classifyAll(sampled);
 
-Future<void> _processFrame(CameraImage image) async {
-  debugPrint(
-    "Processing Frame : ${image.width} x ${image.height}",
-  );
+      final stable = _stabilityFilter.add(classified);
 
-  final frame = FrameProcessor.process(image);
+      if (stable != null && mounted) {
+        setState(() {
+          _sampleColors = stable;
+        });
+      }
+    }
 
-if (frame != null) {
-  debugPrint(
-  "Frame Ready : ${frame.width} x ${frame.height}",
-);
-}
+    _isProcessing = false;
+  }
 
-  _isProcessing = false;
-}
   Future<void> _toggleFlash() async {
     if (_controller == null) return;
 
@@ -77,19 +101,22 @@ if (frame != null) {
       _flash ? FlashMode.torch : FlashMode.off,
     );
 
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
+
   @override
-void dispose() {
-  if (_controller != null &&
-      _controller!.value.isStreamingImages) {
-    _controller!.stopImageStream();
+  void dispose() {
+    if (_controller != null &&
+        _controller!.value.isStreamingImages) {
+      _controller!.stopImageStream();
+    }
+
+    _controller?.dispose();
+
+    super.dispose();
   }
-
-  _controller?.dispose();
-  super.dispose();
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -118,12 +145,13 @@ void dispose() {
           Positioned.fill(
             child: CameraPreview(_controller!),
           ),
+
           const ScannerMask(),
 
-          const ScannerOverlay(
+          ScannerOverlay(
             detected: true,
+            sampleColors: _sampleColors,
           ),
-
 
           Positioned(
             bottom: 40,
@@ -131,9 +159,7 @@ void dispose() {
             right: 0,
             child: Center(
               child: FloatingActionButton.large(
-                onPressed: () {
-                  // Capture will be added next
-                },
+                onPressed: () {},
                 child: const Icon(Icons.camera_alt),
               ),
             ),

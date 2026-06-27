@@ -1,49 +1,47 @@
 import 'package:flutter/material.dart';
 
-enum CubeStickerColor {
-  white,
-  yellow,
-  red,
-  orange,
-  blue,
-  green,
-  unknown,
-}
-
 class ColorClassifier {
-  static CubeStickerColor classify(Color color) {
+  static Color classify(Color color) {
     final hsv = HSVColor.fromColor(color);
 
+    final h = hsv.hue;
+    final s = hsv.saturation;
+    final v = hsv.value;
+
     // White
-    if (hsv.saturation < 0.18 && hsv.value > 0.70) {
-      return CubeStickerColor.white;
+    if (s < 0.18 && v > 0.75) {
+      return Colors.white;
     }
 
     // Yellow
-    if (hsv.hue >= 40 && hsv.hue <= 75) {
-      return CubeStickerColor.yellow;
-    }
-
-    // Orange
-    if (hsv.hue >= 15 && hsv.hue < 40) {
-      return CubeStickerColor.orange;
-    }
-
-    // Red
-    if (hsv.hue < 15 || hsv.hue > 340) {
-      return CubeStickerColor.red;
+    if (h >= 40 && h <= 75) {
+      return Colors.yellow;
     }
 
     // Green
-    if (hsv.hue >= 75 && hsv.hue <= 170) {
-      return CubeStickerColor.green;
+    if (h >= 75 && h <= 170) {
+      return Colors.green;
     }
 
     // Blue
-    if (hsv.hue >= 170 && hsv.hue <= 280) {
-      return CubeStickerColor.blue;
+    if (h >= 170 && h <= 260) {
+      return Colors.blue;
     }
 
-    return CubeStickerColor.unknown;
+    // Red
+    if (h >= 340 || h <= 20) {
+      return Colors.red;
+    }
+
+    // Orange
+    if (h > 20 && h < 40) {
+      return Colors.orange;
+    }
+
+    return Colors.grey;
+  }
+
+  static List<Color> classifyAll(List<Color> colors) {
+    return colors.map(classify).toList();
   }
 }
