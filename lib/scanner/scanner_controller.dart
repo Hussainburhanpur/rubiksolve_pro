@@ -23,6 +23,8 @@ class ScannerController extends ChangeNotifier {
 
   bool get locked => _locked;
 
+  int get scannedFaces => 1;
+
   void unlock() {
     _locked = false;
     notifyListeners();
