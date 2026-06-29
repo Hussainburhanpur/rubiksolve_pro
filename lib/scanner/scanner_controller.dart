@@ -1,23 +1,36 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-import 'frame_processor.dart';
-import 'color_sampler.dart';
 import 'color_classifier.dart';
-import 'stability_filter.dart';
+import 'color_sampler.dart';
 import 'face_detector.dart';
+import 'frame_processor.dart';
+import 'stability_filter.dart';
 
 class ScannerController extends ChangeNotifier {
   final StabilityFilter _stabilityFilter = StabilityFilter();
 
-  List<Color> sampleColors = List.generate(
-    9,
-    (_) => Colors.grey,
-  );
+  List<Color> _sampleColors =
+      List.generate(9, (_) => Colors.grey);
 
-  bool detected = false;
+  bool _detected = false;
+
+  bool _locked = false;
+
+  List<Color> get sampleColors => _sampleColors;
+
+  bool get detected => _detected;
+
+  bool get locked => _locked;
+
+  void unlock() {
+    _locked = false;
+    notifyListeners();
+  }
 
   Future<void> process(CameraImage image) async {
+    if (_locked) return;
+
     final frame = FrameProcessor.process(image);
 
     if (frame == null) return;
@@ -44,21 +57,23 @@ class ScannerController extends ChangeNotifier {
 
     final face = FaceDetector.detect(stable);
 
-    if (!face.valid) return;
-
-    sampleColors = face.colors;
-    detected = true;
+    _sampleColors = face.colors;
+    _detected = face.valid;
 
     notifyListeners();
   }
 
-  void reset() {
-    detected = false;
+  void lockFace() {
+    _locked = true;
+    notifyListeners();
+  }
 
-    sampleColors = List.generate(
-      9,
-      (_) => Colors.grey,
-    );
+  void reset() {
+    _locked = false;
+    _detected = false;
+
+    _sampleColors =
+        List.generate(9, (_) => Colors.grey);
 
     _stabilityFilter.reset();
 
