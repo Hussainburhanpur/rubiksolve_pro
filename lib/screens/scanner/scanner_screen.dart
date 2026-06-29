@@ -116,9 +116,9 @@ Widget build(BuildContext context) {
               top: 10,
               left: 0,
               right: 0,
-              child: const FaceProgress(
-                        scannedFaces: 1,
-                      ),
+              child: FaceProgress(
+                      scannedFaces: 0,
+                    ),
             ),
 
             ScannerOverlay(

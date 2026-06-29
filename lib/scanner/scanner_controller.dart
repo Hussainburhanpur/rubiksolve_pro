@@ -22,53 +22,41 @@ class ScannerController extends ChangeNotifier {
   bool get detected => _detected;
 
   bool get locked => _locked;
+  
+  int _scannedFaces = 0;
 
-  int get scannedFaces => 1;
-
-  void unlock() {
-    _locked = false;
-    notifyListeners();
-  }
+  int get scannedFaces => 0;
 
   Future<void> process(CameraImage image) async {
-    if (_locked) return;
+  final frame = FrameProcessor.process(image);
 
-    final frame = FrameProcessor.process(image);
+  if (frame == null) return;
 
-    if (frame == null) return;
-
-    final sampled = ColorSampler.sample3x3(
-      frame,
-      Rect.fromCenter(
-        center: Offset(
-          frame.width / 2,
-          frame.height / 2,
-        ),
-        width: frame.width * 0.35,
-        height: frame.width * 0.35,
+  final sampled = ColorSampler.sample3x3(
+    frame,
+    Rect.fromCenter(
+      center: Offset(
+        frame.width / 2,
+        frame.height / 2,
       ),
-    );
+      width: frame.width * 0.35,
+      height: frame.width * 0.35,
+    ),
+  );
 
-    final classified =
-        ColorClassifier.classifyAll(sampled);
+  final classified = ColorClassifier.classifyAll(sampled);
 
-    final stable =
-        _stabilityFilter.add(classified);
+  final stable = _stabilityFilter.add(classified);
 
-    if (stable == null) return;
+  if (stable == null) return;
 
-    final face = FaceDetector.detect(stable);
+  final face = FaceDetector.detect(stable);
 
-    _sampleColors = face.colors;
-    _detected = face.valid;
+  _sampleColors = face.colors;
+  _detected = face.valid;
 
-    notifyListeners();
-  }
-
-  void lockFace() {
-    _locked = true;
-    notifyListeners();
-  }
+  notifyListeners();
+}
 
   void reset() {
     _locked = false;
