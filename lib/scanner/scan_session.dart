@@ -1,16 +1,36 @@
-import 'package:flutter/material.dart';
+import '../models/cube/cube_face.dart';
 
 class ScanSession {
-  final List<List<Color>> faces = [];
+  static const List<CubeFace> scanOrder = [
+    CubeFace.up,
+    CubeFace.front,
+    CubeFace.right,
+    CubeFace.back,
+    CubeFace.left,
+    CubeFace.down,
+  ];
 
-  void addFace(List<Color> colors) {
-    if (colors.length != 9) return;
-    faces.add(List.from(colors));
+  int _currentIndex = 0;
+
+  CubeFace get currentFace => scanOrder[_currentIndex];
+
+  int get scannedFaces => _currentIndex;
+
+  bool get isComplete => _currentIndex >= scanOrder.length;
+
+  double get progress => _currentIndex / scanOrder.length;
+
+  bool nextFace() {
+    if (_currentIndex < scanOrder.length - 1) {
+      _currentIndex++;
+      return true;
+    }
+
+    _currentIndex = scanOrder.length;
+    return false;
   }
 
-  bool get isComplete => faces.length == 6;
-
   void reset() {
-    faces.clear();
+    _currentIndex = 0;
   }
 }
