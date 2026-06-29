@@ -117,7 +117,7 @@ Widget build(BuildContext context) {
               left: 0,
               right: 0,
               child: FaceProgress(
-                      scannedFaces: 0,
+                      scannedFaces: _scanner.scannedFaces,
                     ),
             ),
 

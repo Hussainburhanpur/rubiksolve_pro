@@ -1,14 +1,21 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-
+import 'face_storage.dart';
+import 'scan_session.dart';
 import 'color_classifier.dart';
 import 'color_sampler.dart';
 import 'face_detector.dart';
 import 'frame_processor.dart';
 import 'stability_filter.dart';
+import '../models/cube/scanned_face.dart';
+import '../models/cube/cube_face.dart';
 
 class ScannerController extends ChangeNotifier {
   final StabilityFilter _stabilityFilter = StabilityFilter();
+  final FaceStorage _storage = FaceStorage();
+  final ScanSession _session = ScanSession();
+
+  List<Color>? _lastCapturedFace;
 
   List<Color> _sampleColors =
       List.generate(9, (_) => Colors.grey);
@@ -25,9 +32,63 @@ class ScannerController extends ChangeNotifier {
   
   int _scannedFaces = 0;
 
-  int get scannedFaces => 0;
+  int get scannedFaces => _storage.scannedFaces;
+
+  bool _sameFace(List<Color> a, List<Color> b) {
+  if (a.length != b.length) return false;
+
+  for (int i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+  void captureFace() {
+    if (_storage.scannedFaces >= 6) return;
+
+    final added = _storage.addFace(
+  ScannedFace(
+  face: _session.currentFace,
+  stickers: [], // temporary, will replace with CubeColor list
+),
+);
+
+if (added) {
+  _session.nextFace();
+}
+    notifyListeners();
+  }
 
   Future<void> process(CameraImage image) async {
+    if (_locked) {
+  final frame = FrameProcessor.process(image);
+  if (frame == null) return;
+
+  final sampled = ColorSampler.sample3x3(
+    frame,
+    Rect.fromCenter(
+      center: Offset(frame.width / 2, frame.height / 2),
+      width: frame.width * 0.35,
+      height: frame.width * 0.35,
+    ),
+  );
+
+  final classified = ColorClassifier.classifyAll(sampled);
+  final stable = _stabilityFilter.add(classified);
+
+  if (stable == null) return;
+
+  final face = FaceDetector.detect(stable);
+
+  if (!_sameFace(_lastCapturedFace!, face.colors)) {
+    _locked = false;
+  }
+
+  return;
+}
   final frame = FrameProcessor.process(image);
 
   if (frame == null) return;
@@ -54,6 +115,17 @@ class ScannerController extends ChangeNotifier {
 
   _sampleColors = face.colors;
   _detected = face.valid;
+
+  if (_detected && !_locked) {
+    if (_lastCapturedFace == null ||
+        !_sameFace(_lastCapturedFace!, face.colors)) {
+          _lastCapturedFace = List.from(face.colors);
+
+          _locked = true;
+
+          captureFace();
+        }
+  }
 
   notifyListeners();
 }
