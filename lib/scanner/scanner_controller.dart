@@ -9,6 +9,7 @@ import 'frame_processor.dart';
 import 'stability_filter.dart';
 import '../models/cube/scanned_face.dart';
 import '../models/cube/cube_face.dart';
+import 'color_mapper.dart';
 
 class ScannerController extends ChangeNotifier {
   final StabilityFilter _stabilityFilter = StabilityFilter();
@@ -52,7 +53,9 @@ class ScannerController extends ChangeNotifier {
     final added = _storage.addFace(
   ScannedFace(
   face: _session.currentFace,
-  stickers: const[], // temporary, will replace with CubeColor list
+  stickers: ColorMapper.fromFlutterColors(
+  _sampleColors,
+), 
 ),
 );
 

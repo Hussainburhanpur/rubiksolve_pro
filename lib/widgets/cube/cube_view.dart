@@ -1,22 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_cube/flutter_cube.dart';
+import 'cube_painter.dart';
 
-class CubeView extends StatelessWidget {
+class CubeView extends StatefulWidget {
   const CubeView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Cube(
-      onSceneCreated: (Scene scene) {
-        scene.world.add(
-          Object(
-            scale: Vector3(5.0, 5.0, 5.0),
-            fileName: 'assets/cube/cube.obj',
-          ),
-        );
+  State<CubeView> createState() => _CubeViewState();
+}
 
-        scene.camera.zoom = 10;
+class _CubeViewState extends State<CubeView> {
+  double _xRotation = -0.5;
+  double _yRotation = 0.6;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onPanUpdate: (details) {
+        setState(() {
+          _yRotation += details.delta.dx * 0.01;
+          _xRotation -= details.delta.dy * 0.01;
+        });
       },
+      child: Center(
+        child: Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateX(_xRotation)
+            ..rotateY(_yRotation),
+          child: CustomPaint(
+  size: const Size(220, 220),
+  painter: CubePainter(),
+),
+        ),
+      ),
     );
   }
 }
