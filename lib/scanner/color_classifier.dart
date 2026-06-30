@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'color_calibration.dart';
+import '../models/cube/cube_color.dart';
 
 class ColorClassifier {
+  static final ColorCalibration calibration = ColorCalibration();
   static Color classify(Color color) {
     final hsv = HSVColor.fromColor(color);
 

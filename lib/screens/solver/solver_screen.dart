@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../scanner/face_storage.dart';
+import '../../services/cube_string_builder.dart';
+import '../../services/solver_service.dart';
 
 class SolverScreen extends StatefulWidget {
   const SolverScreen({super.key});
@@ -10,6 +13,9 @@ class SolverScreen extends StatefulWidget {
 class _SolverScreenState extends State<SolverScreen> {
   String _cubeString = '';
   List<String> _solution = [];
+  final SolverService _solver = SolverService(
+  baseUrl: 'http://172.16.113.116:5001',
+);
 
   @override
   Widget build(BuildContext context) {
@@ -43,18 +49,65 @@ class _SolverScreenState extends State<SolverScreen> {
             const SizedBox(height: 30),
 
             ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.extension),
-              label: const Text("Generate Cube String"),
-            ),
+  onPressed: () {
+    try {
+      final cube = CubeStringBuilder.build(
+        FaceStorage.instance.cubeState,
+      );
+
+      setState(() {
+        _cubeString = cube;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
+  },
+  icon: const Icon(Icons.extension),
+  label: const Text("Generate Cube String"),
+),
 
             const SizedBox(height: 15),
 
             ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.play_arrow),
-              label: const Text("Solve Cube"),
-            ),
+  onPressed: () async {
+    if (_cubeString.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Generate the cube string first."),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final moves = await _solver.solve(_cubeString);
+
+      setState(() {
+        _solution = moves;
+      });
+
+      if (moves.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Cube is already solved."),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
+  },
+  icon: const Icon(Icons.play_arrow),
+  label: const Text("Solve Cube"),
+),
 
             const SizedBox(height: 30),
 

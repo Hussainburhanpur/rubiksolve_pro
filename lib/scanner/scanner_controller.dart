@@ -10,10 +10,11 @@ import 'stability_filter.dart';
 import '../models/cube/scanned_face.dart';
 import '../models/cube/cube_face.dart';
 import 'color_mapper.dart';
+import 'face_identifier.dart';
 
 class ScannerController extends ChangeNotifier {
   final StabilityFilter _stabilityFilter = StabilityFilter();
-  final FaceStorage _storage = FaceStorage();
+  final FaceStorage _storage = FaceStorage.instance;
   final ScanSession _session = ScanSession();
 
   List<Color>? _lastCapturedFace;
@@ -48,22 +49,23 @@ class ScannerController extends ChangeNotifier {
 }
 
   void captureFace() {
-    if (_storage.scannedFaces >= 6) return;
+  final stickers = ColorMapper.fromFlutterColors(
+    _sampleColors,
+  );
 
-    final added = _storage.addFace(
-  ScannedFace(
-  face: _session.currentFace,
-  stickers: ColorMapper.fromFlutterColors(
-  _sampleColors,
-), 
-),
-);
+  final face = FaceIdentifier.identify(
+    stickers[4], // Center sticker
+  );
 
-if (added) {
-  _session.nextFace();
+  _storage.addFace(
+    ScannedFace(
+      face: face,
+      stickers: stickers,
+    ),
+  );
+
+  notifyListeners();
 }
-    notifyListeners();
-  }
 
   Future<void> process(CameraImage image) async {
     if (_locked) {

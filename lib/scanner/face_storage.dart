@@ -3,16 +3,16 @@ import '../models/cube/cube_state.dart';
 import '../models/cube/scanned_face.dart';
 
 class FaceStorage {
+  static final FaceStorage instance = FaceStorage._();
+
+  FaceStorage._();
+
   final CubeState cubeState = CubeState();
 
   bool addFace(ScannedFace face) {
-    if (cubeState.faces.containsKey(face.face)) {
-      return false;
-    }
-
-    cubeState.addFace(face);
-    return true;
-  }
+  cubeState.addFace(face);
+  return true;
+}
 
   bool hasFace(CubeFace face) {
     return cubeState.faces.containsKey(face);
