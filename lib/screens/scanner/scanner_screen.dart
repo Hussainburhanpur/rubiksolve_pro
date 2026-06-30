@@ -113,6 +113,20 @@ Widget build(BuildContext context) {
             const ScannerMask(),
 
             Positioned(
+  bottom: 40,
+  left: 0,
+  right: 0,
+  child: Center(
+    child: FloatingActionButton.large(
+      onPressed: () {
+        _scanner.captureFace();
+      },
+      child: const Icon(Icons.camera_alt),
+    ),
+  ),
+),
+
+            Positioned(
               top: 10,
               left: 0,
               right: 0,

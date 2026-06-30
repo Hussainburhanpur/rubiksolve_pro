@@ -52,7 +52,7 @@ class ScannerController extends ChangeNotifier {
     final added = _storage.addFace(
   ScannedFace(
   face: _session.currentFace,
-  stickers: [], // temporary, will replace with CubeColor list
+  stickers: const[], // temporary, will replace with CubeColor list
 ),
 );
 
@@ -116,16 +116,6 @@ if (added) {
   _sampleColors = face.colors;
   _detected = face.valid;
 
-  if (_detected && !_locked) {
-    if (_lastCapturedFace == null ||
-        !_sameFace(_lastCapturedFace!, face.colors)) {
-          _lastCapturedFace = List.from(face.colors);
-
-          _locked = true;
-
-          captureFace();
-        }
-  }
 
   notifyListeners();
 }

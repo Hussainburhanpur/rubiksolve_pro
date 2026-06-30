@@ -9,33 +9,38 @@ class ColorClassifier {
     final v = hsv.value;
 
     // White
-    if (s < 0.18 && v > 0.75) {
+    if (v > 0.82 && s < 0.22) {
       return Colors.white;
     }
 
     // Yellow
-    if (h >= 40 && h <= 75) {
+    if (h >= 38 && h <= 70 && s > 0.30) {
       return Colors.yellow;
     }
 
+    // Orange
+    if (h >= 15 && h < 38 && s > 0.35) {
+      return Colors.orange;
+    }
+
+    // Red
+    if ((h >= 345 || h <= 15) && s > 0.35) {
+      return Colors.red;
+    }
+
     // Green
-    if (h >= 75 && h <= 170) {
+    if (h >= 75 && h <= 165 && s > 0.25) {
       return Colors.green;
     }
 
     // Blue
-    if (h >= 170 && h <= 260) {
+    if (h >= 180 && h <= 260 && s > 0.25) {
       return Colors.blue;
     }
 
-    // Red
-    if (h >= 340 || h <= 20) {
-      return Colors.red;
-    }
-
-    // Orange
-    if (h > 20 && h < 40) {
-      return Colors.orange;
+    // Bright but low saturation → White
+    if (v > 0.75 && s < 0.30) {
+      return Colors.white;
     }
 
     return Colors.grey;

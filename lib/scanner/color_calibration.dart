@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 
 class ColorCalibration {
-  static Color? whiteReference;
+  final Map<String, Color> _references = {};
 
-  static bool get isCalibrated => whiteReference != null;
+  bool get isComplete => _references.length == 6;
 
-  static void calibrateWhite(Color color) {
-    whiteReference = color;
+  void setReference(String face, Color color) {
+    _references[face] = color;
   }
 
-  static void reset() {
-    whiteReference = null;
+  Color? reference(String face) => _references[face];
+
+  void clear() {
+    _references.clear();
   }
+
+  Map<String, Color> get references => _references;
 }
