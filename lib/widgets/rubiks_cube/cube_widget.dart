@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'cube_scene.dart';
 import 'cube_controller.dart';
 import 'cubie_widget.dart';
 
@@ -12,6 +12,7 @@ class CubeWidget extends StatefulWidget {
 
 class _CubeWidgetState extends State<CubeWidget> {
   final CubeController controller = CubeController();
+
 
   @override
   Widget build(BuildContext context) {
@@ -31,23 +32,9 @@ class _CubeWidgetState extends State<CubeWidget> {
             ..setEntry(3, 2, 0.0015)
             ..rotateX(controller.rotationX)
             ..rotateY(controller.rotationY),
-          child: SizedBox(
-            width: 170,
-            height: 170,
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 9,
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-              ),
-              itemBuilder: (_, index) {
-  return CubieWidget(
-    data: controller.cubies[index + 18],
-  );
-},
-            ),
-          ),
+          child: CubeScene(
+  controller: controller,
+),
         ),
       ),
     );
