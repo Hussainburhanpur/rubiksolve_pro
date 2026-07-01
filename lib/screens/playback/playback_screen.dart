@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'playback_controller.dart';
+import '../../widgets/rubiks_cube/cube_widget.dart';
 import '../../widgets/cube/cube_view.dart';
 
 class PlaybackScreen extends StatefulWidget {
@@ -48,9 +49,11 @@ class _PlaybackScreenState extends State<PlaybackScreen> {
             const SizedBox(height: 20),
 
             const Expanded(
-              flex: 5,
-              child: CubeView(),
-            ),
+  flex: 5,
+  child: Center(
+    child: CubeWidget(),
+  ),
+),
 
             const SizedBox(height: 20),
 

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-
+import 'camera.dart';
 import 'cube3d.dart';
 
 class CubeRenderer extends CustomPainter {
   final Cube3D cube;
+  final Camera camera;
 
-  CubeRenderer(this.cube);
+  CubeRenderer(
+    this.cube,
+    this.camera,
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
