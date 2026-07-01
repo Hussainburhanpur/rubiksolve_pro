@@ -19,7 +19,7 @@ dependencies:
 
   http: ^1.5.0
 
-  flutter_cube: ^0.1.1
+  three_js: ^0.3.0
 
   camera: ^0.11.2
 
