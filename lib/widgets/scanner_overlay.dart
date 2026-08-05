@@ -92,17 +92,37 @@ class ScannerOverlayPainter extends CustomPainter {
                 ? sampleColors[index]
                 : Colors.red;
 
+        final Offset center = Offset(
+          cellW * col + cellW / 2,
+          cellH * row + cellH / 2,
+        );
+
         final Paint samplePaint = Paint()
           ..color = color
           ..style = PaintingStyle.fill;
 
-        canvas.drawCircle(
-          Offset(
-            cellW * col + cellW / 2,
-            cellH * row + cellH / 2,
+        canvas.drawCircle(center, 6, samplePaint);
+
+        final TextPainter textPainter = TextPainter(
+          text: TextSpan(
+            text: '$index',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          6,
-          samplePaint,
+          textDirection: TextDirection.ltr,
+        );
+
+        textPainter.layout();
+
+        textPainter.paint(
+          canvas,
+          Offset(
+            center.dx - textPainter.width / 2,
+            center.dy + 10,
+          ),
         );
       }
     }

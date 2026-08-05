@@ -2,17 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'sticker_detector.dart';
 
-/// Result after ordering the detected stickers into
-/// a consistent 3×3 grid.
 class GridDetectionResult {
-  /// True when exactly nine stickers were successfully ordered.
   final bool valid;
-
-  /// Ordered stickers:
-  ///
-  /// 0 1 2
-  /// 3 4 5
-  /// 6 7 8
   final List<StickerCandidate> stickers;
 
   const GridDetectionResult({
@@ -22,17 +13,6 @@ class GridDetectionResult {
 }
 
 class GridDetector {
-  /// Orders sticker candidates into a consistent 3×3 grid.
-  ///
-  /// Version 2:
-  /// - Validates there are exactly 9 stickers.
-  /// - Sorts them from top to bottom (Y-axis).
-  ///
-  /// Future versions:
-  /// - Split into rows.
-  /// - Sort each row by X.
-  /// - Validate spacing.
-  /// - Validate geometry.
   static GridDetectionResult detect(
     List<StickerCandidate> stickers,
   ) {
@@ -43,18 +23,37 @@ class GridDetector {
       );
     }
 
-    final List<StickerCandidate> ordered =
-        List<StickerCandidate>.from(stickers);
+    final ordered = List<StickerCandidate>.from(stickers);
 
-    // First ordering step:
-    // Arrange stickers from top to bottom.
+    // Step 1
+    // Sort vertically.
     ordered.sort(
       (a, b) => a.center.dy.compareTo(b.center.dy),
     );
 
+    // Step 2
+    // Split into three rows.
+    final row1 = ordered.sublist(0, 3);
+    final row2 = ordered.sublist(3, 6);
+    final row3 = ordered.sublist(6, 9);
+
+    // Step 3
+    // Sort each row left-to-right.
+    row1.sort((a, b) => a.center.dx.compareTo(b.center.dx));
+    row2.sort((a, b) => a.center.dx.compareTo(b.center.dx));
+    row3.sort((a, b) => a.center.dx.compareTo(b.center.dx));
+
+    // Step 4
+    // Merge.
+    final result = <StickerCandidate>[
+      ...row1,
+      ...row2,
+      ...row3,
+    ];
+
     return GridDetectionResult(
       valid: true,
-      stickers: ordered,
+      stickers: result,
     );
   }
 }
