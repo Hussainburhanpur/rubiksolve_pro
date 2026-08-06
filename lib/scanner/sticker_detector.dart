@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 
-/// Represents one detected sticker on a Rubik's Cube face.
+/// Represents one detected sticker.
 class StickerCandidate {
-  /// Bounding rectangle of the detected sticker.
   final Rect bounds;
-
-  /// Center point of the sticker.
   final Offset center;
 
   const StickerCandidate({
@@ -14,30 +12,49 @@ class StickerCandidate {
   });
 }
 
-/// Result returned by the sticker detector.
 class StickerDetectionResult {
-  /// Whether a valid face was detected.
   final bool valid;
-
-  /// All detected sticker candidates.
   final List<StickerCandidate> stickers;
+  final List<Color> sampleColors;
 
   const StickerDetectionResult({
     required this.valid,
     required this.stickers,
+    this.sampleColors = const [],
   });
 }
 
-/// Detects sticker locations from a camera frame.
-///
-/// NOTE:
-/// This is currently a placeholder.
-/// The OpenCV implementation will be added in the next step.
 class StickerDetector {
-  static StickerDetectionResult detect() {
-    return const StickerDetectionResult(
+  static StickerDetectionResult detect(img.Image image) {
+    final List<Color> colors = [];
+
+    const int grid = 3;
+
+    final double cellW = image.width / grid;
+    final double cellH = image.height / grid;
+
+    for (int row = 0; row < grid; row++) {
+      for (int col = 0; col < grid; col++) {
+        final int x = (cellW * (col + 0.5)).round();
+        final int y = (cellH * (row + 0.5)).round();
+
+        final pixel = image.getPixel(x, y);
+
+        colors.add(
+          Color.fromARGB(
+            255,
+            pixel.r.toInt(),
+            pixel.g.toInt(),
+            pixel.b.toInt(),
+          ),
+        );
+      }
+    }
+
+    return StickerDetectionResult(
       valid: false,
-      stickers: [],
+      stickers: const [],
+      sampleColors: colors,
     );
   }
 }

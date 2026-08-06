@@ -1,8 +1,6 @@
 import 'package:image/image.dart' as img;
 
 /// Result produced by the edge detector.
-///
-/// Later this image will be passed to the StickerDetector.
 class EdgeDetectionResult {
   final img.Image image;
 
@@ -12,23 +10,20 @@ class EdgeDetectionResult {
 }
 
 class EdgeDetector {
-  /// Detects edges in an RGB image.
-  ///
-  /// Current Version:
-  /// - Converts the image to grayscale.
-  ///
-  /// Future Versions:
-  /// - Gaussian Blur
-  /// - Sobel Gradient
-  /// - Canny Edge Detection
-  /// - Morphological Cleanup
   static EdgeDetectionResult detect(
     img.Image image,
   ) {
-    final img.Image gray = img.grayscale(image);
+    // Step 1
+    final gray = img.grayscale(image);
+
+    // Step 2
+    final blurred = img.gaussianBlur(
+      gray,
+      radius: 2,
+    );
 
     return EdgeDetectionResult(
-      image: gray,
+      image: blurred,
     );
   }
 }

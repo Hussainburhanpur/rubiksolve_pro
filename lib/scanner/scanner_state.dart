@@ -9,6 +9,7 @@ class ScannerState {
   final bool flash;
 
   final bool detected;
+  final bool geometryValid;
 
   final List<Color> sampleColors;
 
@@ -18,6 +19,7 @@ class ScannerState {
     this.processing = false,
     this.flash = false,
     this.detected = false,
+    this.geometryValid = false,
     this.sampleColors = const [],
   });
 
@@ -27,6 +29,7 @@ class ScannerState {
     bool? processing,
     bool? flash,
     bool? detected,
+    bool? geometryValid,
     List<Color>? sampleColors,
   }) {
     return ScannerState(
@@ -35,6 +38,7 @@ class ScannerState {
       processing: processing ?? this.processing,
       flash: flash ?? this.flash,
       detected: detected ?? this.detected,
+      geometryValid: geometryValid ?? this.geometryValid,
       sampleColors: sampleColors ?? this.sampleColors,
     );
   }

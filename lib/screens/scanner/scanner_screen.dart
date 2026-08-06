@@ -80,69 +80,73 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   @override
-Widget build(BuildContext context) {
-  if (_loading || _controller == null) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
-
-  return AnimatedBuilder(
-    animation: _scanner,
-    builder: (context, _) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text("Scan Cube"),
-          actions: [
-            IconButton(
-              onPressed: _toggleFlash,
-              icon: Icon(
-                _flash ? Icons.flash_on : Icons.flash_off,
-              ),
-            ),
-          ],
-        ),
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: CameraPreview(_controller!),
-            ),
-
-            const ScannerMask(),
-
-            Positioned(
-  bottom: 40,
-  left: 0,
-  right: 0,
-  child: Center(
-    child: FloatingActionButton.large(
-      onPressed: () {
-        _scanner.captureFace();
-      },
-      child: const Icon(Icons.camera_alt),
-    ),
-  ),
-),
-
-            Positioned(
-              top: 10,
-              left: 0,
-              right: 0,
-              child: FaceProgress(
-                      scannedFaces: _scanner.scannedFaces,
-                    ),
-            ),
-
-            ScannerOverlay(
-              detected: _scanner.detected,
-              sampleColors: _scanner.sampleColors,
-            ),
-          ],
+  Widget build(BuildContext context) {
+    if (_loading || _controller == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
         ),
       );
-    },
-  );
-}
+    }
+
+    return AnimatedBuilder(
+      animation: _scanner,
+      builder: (context, _) {
+        final state = _scanner.state;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("Scan Cube"),
+            actions: [
+              IconButton(
+                onPressed: _toggleFlash,
+                icon: Icon(
+                  _flash ? Icons.flash_on : Icons.flash_off,
+                ),
+              ),
+            ],
+          ),
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: CameraPreview(_controller!),
+              ),
+
+              const ScannerMask(),
+
+              Positioned(
+                top: 10,
+                left: 0,
+                right: 0,
+                child: FaceProgress(
+                  scannedFaces: _scanner.scannedFaces.length,
+                ),
+              ),
+
+              ScannerOverlay(
+                detected: state.geometryValid,
+                sampleColors: state.sampleColors,
+              ),
+
+              Positioned(
+                bottom: 40,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: FloatingActionButton.large(
+  onPressed: _scanner.geometryValid
+      ? () {
+          _scanner.captureFace();
+        }
+      : null,
+  child: const Icon(Icons.camera_alt),
+),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

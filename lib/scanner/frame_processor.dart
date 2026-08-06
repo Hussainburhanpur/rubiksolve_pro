@@ -8,6 +8,7 @@ class FrameProcessor {
       return null;
     }
 
+
     final int width = image.width;
     final int height = image.height;
 

@@ -1,139 +1,115 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'face_storage.dart';
-import 'scan_session.dart';
-import 'color_classifier.dart';
-import 'color_sampler.dart';
-import 'face_detector.dart';
-import 'frame_processor.dart';
-import 'stability_filter.dart';
-import '../models/cube/scanned_face.dart';
+
 import '../models/cube/cube_face.dart';
-import 'color_mapper.dart';
-import 'face_identifier.dart';
+
+import 'scanner_state.dart';
+import 'frame_processor.dart';
+import 'edge_detector.dart';
+import 'sticker_detector.dart';
+import 'grid_detector.dart';
+import 'geometry_validator.dart';
 
 class ScannerController extends ChangeNotifier {
-  final StabilityFilter _stabilityFilter = StabilityFilter();
-  final FaceStorage _storage = FaceStorage.instance;
-  final ScanSession _session = ScanSession();
+  ScannerState _state = const ScannerState();
 
-  List<Color>? _lastCapturedFace;
+  ScannerState get state => _state;
 
-  List<Color> _sampleColors =
-      List.generate(9, (_) => Colors.grey);
+  bool get detected => _state.detected;
 
-  bool _detected = false;
+  bool get geometryValid => _state.geometryValid;
 
-  bool _locked = false;
+  List<Color> get sampleColors => _state.sampleColors;
 
-  List<Color> get sampleColors => _sampleColors;
+  final List<CubeFace> _scannedFaces = [];
 
-  bool get detected => _detected;
-
-  bool get locked => _locked;
-  
-  int _scannedFaces = 0;
-
-  int get scannedFaces => _storage.scannedFaces;
-
-  bool _sameFace(List<Color> a, List<Color> b) {
-  if (a.length != b.length) return false;
-
-  for (int i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-  void captureFace() {
-  final stickers = ColorMapper.fromFlutterColors(
-    _sampleColors,
-  );
-
-  final face = FaceIdentifier.identify(
-    stickers[4], // Center sticker
-  );
-
-  _storage.addFace(
-    ScannedFace(
-      face: face,
-      stickers: stickers,
-    ),
-  );
-
-  notifyListeners();
-}
+  List<CubeFace> get scannedFaces => List.unmodifiable(_scannedFaces);
 
   Future<void> process(CameraImage image) async {
-    if (_locked) {
-  final frame = FrameProcessor.process(image);
-  if (frame == null) return;
+    final rgbImage = FrameProcessor.process(image);
 
-  final sampled = ColorSampler.sample3x3(
-    frame,
-    Rect.fromCenter(
-      center: Offset(frame.width / 2, frame.height / 2),
-      width: frame.width * 0.35,
-      height: frame.width * 0.35,
-    ),
-  );
+    if (rgbImage == null) {
+      _updateDetection(
+        detected: false,
+        geometryValid: false,
+      );
+      return;
+    }
 
-  final classified = ColorClassifier.classifyAll(sampled);
-  final stable = _stabilityFilter.add(classified);
+    final edges = EdgeDetector.detect(rgbImage);
+    debugPrint(edges.toString());
 
-  if (stable == null) return;
+    final stickerResult = StickerDetector.detect(rgbImage);
 
-  final face = FaceDetector.detect(stable);
+    _state = _state.copyWith(
+      sampleColors: stickerResult.sampleColors,
+    );
+    notifyListeners();
 
-  if (!_sameFace(_lastCapturedFace!, face.colors)) {
-    _locked = false;
+    if (!stickerResult.valid) {
+      _updateDetection(
+        detected: false,
+        geometryValid: false,
+      );
+      return;
+    }
+
+    final grid = GridDetector.detect(
+      stickerResult.stickers,
+    );
+
+    if (!grid.valid) {
+      _updateDetection(
+        detected: false,
+        geometryValid: false,
+      );
+      return;
+    }
+
+    final geometry = GeometryValidator.validate(
+      grid.stickers,
+    );
+
+    _updateDetection(
+      detected: true,
+      geometryValid: geometry.valid,
+    );
   }
 
-  return;
-}
-  final frame = FrameProcessor.process(image);
+  void captureFace() {
+    if (!_state.geometryValid) {
+      return;
+    }
 
-  if (frame == null) return;
-
-  final sampled = ColorSampler.sample3x3(
-    frame,
-    Rect.fromCenter(
-      center: Offset(
-        frame.width / 2,
-        frame.height / 2,
-      ),
-      width: frame.width * 0.35,
-      height: frame.width * 0.35,
-    ),
-  );
-
-  final classified = ColorClassifier.classifyAll(sampled);
-
-  final stable = _stabilityFilter.add(classified);
-
-  if (stable == null) return;
-
-  final face = FaceDetector.detect(stable);
-
-  _sampleColors = face.colors;
-  _detected = face.valid;
-
-
-  notifyListeners();
-}
+    // TODO
+  }
 
   void reset() {
-    _locked = false;
-    _detected = false;
+    _scannedFaces.clear();
 
-    _sampleColors =
-        List.generate(9, (_) => Colors.grey);
-
-    _stabilityFilter.reset();
+    _state = const ScannerState();
 
     notifyListeners();
+  }
+
+  void disposeScanner() {
+    reset();
+  }
+
+  void _updateDetection({
+    required bool detected,
+    required bool geometryValid,
+  }) {
+    _state = _state.copyWith(
+      detected: detected,
+      geometryValid: geometryValid,
+    );
+
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }
