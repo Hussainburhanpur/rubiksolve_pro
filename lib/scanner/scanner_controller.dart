@@ -1,6 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-
+import 'preprocessor.dart';
 import '../models/cube/cube_face.dart';
 
 import 'scanner_state.dart';
@@ -36,10 +36,12 @@ class ScannerController extends ChangeNotifier {
       return;
     }
 
-    final edges = EdgeDetector.detect(rgbImage);
-    debugPrint(edges.toString());
+    final preprocessed = Preprocessor.process(rgbImage);
 
-    final stickerResult = StickerDetector.detect(rgbImage);
+final edges = EdgeDetector.detect(preprocessed.image);
+debugPrint(edges.toString());
+
+final stickerResult = StickerDetector.detect(preprocessed.image);
 
     _state = _state.copyWith(
       sampleColors: stickerResult.sampleColors,
