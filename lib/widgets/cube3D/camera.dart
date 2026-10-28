@@ -6,10 +6,10 @@ class Camera {
   double zoom;
 
   Camera({
-    this.yaw = 0.7,
-    this.pitch = -0.5,
-    this.zoom = 170,
-  });
+  this.yaw = 0.0,
+  this.pitch = 0.45,
+  this.zoom = 230,
+});
 
   Matrix4 get matrix {
     return Matrix4.identity()
@@ -21,7 +21,16 @@ class Camera {
     yaw += dx;
     pitch += dy;
 
-    // Prevent camera flipping upside down
+    pitch = pitch.clamp(-1.4, 1.4);
+  }
+
+  void setOrientation({
+    required double targetYaw,
+    required double targetPitch,
+  }) {
+    yaw = targetYaw;
+    pitch = targetPitch;
+
     pitch = pitch.clamp(-1.4, 1.4);
   }
 }

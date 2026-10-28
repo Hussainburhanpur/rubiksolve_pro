@@ -12,7 +12,7 @@ class ScanSession {
 
   int _currentIndex = 0;
 
-  CubeFace get currentFace => scanOrder[_currentIndex];
+  CubeFace? get currentFace => isComplete ? null : scanOrder[_currentIndex];
 
   int get scannedFaces => _currentIndex;
 

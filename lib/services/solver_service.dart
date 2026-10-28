@@ -1,5 +1,6 @@
-import 'dart:convert';
 
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class SolverService {
@@ -19,15 +20,33 @@ class SolverService {
         'cube': cube,
       }),
     );
+    debugPrint('SOLVER STATUS: ${response.statusCode}');
+debugPrint('SOLVER RESPONSE: ${response.body}');
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to solve cube');
+    final Map<String, dynamic> json;
+
+    try {
+      json = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      throw Exception(
+        'Invalid response from solver server (${response.statusCode}).',
+      );
     }
 
-    final json = jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception(
+        json['error']?.toString() ?? 'Failed to solve cube.',
+      );
+    }
 
-    final solution = json['solution'] as String;
+    if (json['solution'] is! String) {
+      throw Exception('Invalid solution received from server.');
+    }
 
-    return solution.split(' ');
+    final solution = (json['solution'] as String).trim();
+
+    return solution.isEmpty
+        ? []
+        : solution.split(RegExp(r'\s+'));
   }
 }

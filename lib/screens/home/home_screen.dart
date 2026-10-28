@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../solver/solver_screen.dart';
 import '../scanner/scanner_screen.dart';
 import '../learn/learn_screen.dart';
-import '../playback/playback_screen.dart';
 import '../statistics/statistics_screen.dart';
 import '../settings/settings_screen.dart';
 
@@ -100,13 +99,6 @@ class HomeScreen extends StatelessWidget {
                 Icons.school,
                 "Learn Algorithms",
                 const LearnScreen(),
-              ),
-
-              buildButton(
-                context,
-                Icons.smart_display,
-                "Solution Playback",
-                const PlaybackScreen(),
               ),
 
               buildButton(

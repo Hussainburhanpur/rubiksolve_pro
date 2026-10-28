@@ -1,5 +1,3 @@
-import 'dart:async';
-
 class PlaybackController {
   PlaybackController({
     required List<String> moves,
@@ -9,8 +7,6 @@ class PlaybackController {
 
   int _index = 0;
   bool _playing = false;
-
-  Timer? _timer;
 
   List<String> get moves => _moves;
 
@@ -22,52 +18,62 @@ class PlaybackController {
 
   String get currentMove {
     if (_moves.isEmpty) return "";
+
+    if (_index == 0) {
+      return _moves[0];
+    }
+
+    return _moves[_index - 1];
+  }
+
+  String? get nextMove {
+    if (_index >= _moves.length) {
+      return null;
+    }
+
     return _moves[_index];
   }
 
-  void next() {
-    if (_index < _moves.length - 1) {
+  String? get previousMove {
+    if (_index <= 0) {
+      return null;
+    }
+
+    return _moves[_index - 1];
+  }
+
+  bool get canGoNext {
+    return _index < _moves.length;
+  }
+
+  bool get canGoPrevious {
+    return _index > 0;
+  }
+
+  void markNextApplied() {
+    if (_index < _moves.length) {
       _index++;
     }
   }
 
-  void previous() {
+  void markPreviousApplied() {
     if (_index > 0) {
       _index--;
     }
   }
 
+  void startPlaying() {
+    _playing = true;
+  }
+
+  void stopPlaying() {
+    _playing = false;
+  }
+
   void reset() {
     _index = 0;
-  }
-
-  void play(VoidCallback onTick) {
-    if (_playing) return;
-
-    _playing = true;
-
-    _timer = Timer.periodic(
-      const Duration(milliseconds: 700),
-      (_) {
-        if (_index >= _moves.length - 1) {
-          pause();
-          return;
-        }
-
-        next();
-        onTick();
-      },
-    );
-  }
-
-  void pause() {
     _playing = false;
-    _timer?.cancel();
   }
 
-  void dispose() {
-    _timer?.cancel();
-  }
+  void dispose() {}
 }
-
-typedef VoidCallback = void Function();
