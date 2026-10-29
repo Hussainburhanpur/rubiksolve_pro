@@ -34,123 +34,39 @@ class Cube3DViewState extends State<Cube3DView> {
     );
   }
 
-  Future<void> animateMove(String move) async {
+  
+Future<void> animateMove(String move) async {
   if (cube.isAnimating) return;
 
   final normalized = move.trim().toUpperCase();
+  if (normalized.isEmpty) return;
 
-  // A "2" move is one solution step, but visually
-  // consists of two separate 90° rotations.
-  if (normalized.endsWith('2')) {
-    final quarterMove = normalized[0];
-
-    // First 90° rotation.
-    cube.startAnimation(quarterMove);
-
-    const frameDuration = Duration(milliseconds: 16);
-    const totalDuration = Duration(milliseconds: 360);
-
-    final start1 = DateTime.now();
-
-    while (mounted && cube.isAnimating) {
-      final elapsed = DateTime.now().difference(start1);
-
-      double progress =
-          elapsed.inMilliseconds /
-          totalDuration.inMilliseconds;
-
-      if (progress >= 1.0) {
-        progress = 1.0;
-      }
-
-      setState(() {
-        cube.updateAnimation(progress);
-      });
-
-      if (progress >= 1.0) {
-        break;
-      }
-
-      await Future.delayed(frameDuration);
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      cube.finishAnimation();
-    });
-
-    // Very short pause between the two quarter-turns.
-    await Future.delayed(
-      const Duration(milliseconds: 80),
-    );
-
-    if (!mounted) return;
-
-    // Second 90° rotation.
-    cube.startAnimation(quarterMove);
-
-    final start2 = DateTime.now();
-
-    while (mounted && cube.isAnimating) {
-      final elapsed = DateTime.now().difference(start2);
-
-      double progress =
-          elapsed.inMilliseconds /
-          totalDuration.inMilliseconds;
-
-      if (progress >= 1.0) {
-        progress = 1.0;
-      }
-
-      setState(() {
-        cube.updateAnimation(progress);
-      });
-
-      if (progress >= 1.0) {
-        break;
-      }
-
-      await Future.delayed(frameDuration);
-    }
-
-    if (!mounted) return;
-
-    // finishAnimation() applies the quarter move logically.
-    // The two calls together therefore produce the required 180°.
-    setState(() {
-      cube.finishAnimation();
-    });
-
-    return;
-  }
-
-  // Normal 90° / prime move.
   cube.startAnimation(normalized);
 
   const frameDuration = Duration(milliseconds: 16);
-  const totalDuration = Duration(milliseconds: 360);
 
-  final start = DateTime.now();
+  // Target duration based on the original app's
+  // previously extracted 1.5-second move setting.
+  const totalDuration = Duration(milliseconds: 1500);
+
+  final startTime = DateTime.now();
 
   while (mounted && cube.isAnimating) {
-    final elapsed = DateTime.now().difference(start);
+    final elapsed = DateTime.now().difference(startTime);
 
-    double progress =
-        elapsed.inMilliseconds /
-        totalDuration.inMilliseconds;
+    final progress = (
+      elapsed.inMilliseconds / totalDuration.inMilliseconds
+    ).clamp(0.0, 1.0);
 
-    if (progress >= 1.0) {
-      progress = 1.0;
-    }
+    // Smooth acceleration and deceleration.
+    final easedProgress =
+        Curves.easeInOutCubic.transform(progress);
 
     setState(() {
-      cube.updateAnimation(progress);
+      cube.updateAnimation(easedProgress);
     });
 
-    if (progress >= 1.0) {
-      break;
-    }
+    if (progress >= 1.0) break;
 
     await Future.delayed(frameDuration);
   }
@@ -161,6 +77,7 @@ class Cube3DViewState extends State<Cube3DView> {
     cube.finishAnimation();
   });
 }
+
 
   void applyMove(String move) {
     setState(() {

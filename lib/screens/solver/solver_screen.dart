@@ -12,7 +12,7 @@ class SolverScreen extends StatefulWidget {
 
 class _SolverScreenState extends State<SolverScreen> {
   final SolverService _solver = SolverService(
-    baseUrl: 'http://192.168.1.12:5001',
+    baseUrl: 'http://192.168.1.11:5001',
   );
 
   // ------------------------------------------------------------
@@ -87,10 +87,18 @@ class _SolverScreenState extends State<SolverScreen> {
   // ------------------------------------------------------------
 
   void _initializeCube() {
-  _cube = {
-    for (final face in _faces)
-      face: List<String>.filled(9, face),
-  };
+  const testCube =
+      'DDUFUUBRRFRRLRDBBLLBUBFFBRRUDDUDDDFFLRDULLRLLBFFLBBUUF';
+
+  _cube = {};
+
+  for (int i = 0; i < _faces.length; i++) {
+    final face = _faces[i];
+
+    _cube[face] = testCube
+        .substring(i * 9, (i + 1) * 9)
+        .split('');
+  }
 }
   // ------------------------------------------------------------
   // Current face

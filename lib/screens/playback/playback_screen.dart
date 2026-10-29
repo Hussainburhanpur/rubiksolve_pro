@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'playback_controller.dart';
@@ -27,12 +27,12 @@ class _PlaybackScreenState extends State<PlaybackScreen> {
 
   String currentFrontFace = 'F';
 
-  final List<String> _nextQueue = [];
-  int _previousQueue = 0;
+  final List<String> _commandQueue = [];
 
   bool _processingQueue = false;
-  bool _nextMoveInProgress = false;
   bool _playRequested = false;
+  bool _showOrientationHint = true;
+
 
   @override
   void initState() {
@@ -128,423 +128,238 @@ class _PlaybackScreenState extends State<PlaybackScreen> {
     return ['F', targetFace];
   }
 
-  Future<void> _updateOrientationForMove(String move) async {
-  final targetFace = _targetFaceForMove(move);
 
-  if (currentFrontFace == targetFace) {
-    return;
-  }
-
-  switch (targetFace) {
-  case 'U':
-  // First return to the normal F-front orientation.
+Future<void> _resetCameraView() async {
   await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 0.0,
-    targetPitch: 0.45,
-    duration: const Duration(milliseconds: 700),
+    targetYaw: -0.6,
+    targetPitch: 0.55,
+    duration: const Duration(milliseconds: 500),
   );
+}
+  
 
-  // Then tilt upward so U becomes the working face.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 0.0,
-    targetPitch: 1.0,
-    duration: const Duration(milliseconds: 900),
-  );
-  break;
-
-    case 'B':
-  // First return to the normal F-front orientation.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 0.0,
-    targetPitch: 0.45,
-    duration: const Duration(milliseconds: 700),
-  );
-
-  // Then turn the cube 180° so B becomes the front face.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 3.1415926535,
-    targetPitch: 0.45,
-    duration: const Duration(milliseconds: 1200),
-  );
-  break;
-
-  case 'D':
-  // First return to the normal F-front orientation.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 0.0,
-    targetPitch: 0.45,
-    duration: const Duration(milliseconds: 700),
-  );
-
-  // Then tilt downward so D becomes the working face.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 0.0,
-    targetPitch: -1.0,
-    duration: const Duration(milliseconds: 900),
-  );
-  break;
-
-  case 'L':
-  // First return to the normal F-front orientation.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 0.0,
-    targetPitch: 0.45,
-    duration: const Duration(milliseconds: 700),
-  );
-
-  // Then turn left so L becomes the working face.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 1.57,
-    targetPitch: 0.45,
-    duration: const Duration(milliseconds: 900),
-  );
-  break;
-
-  case 'R':
-  // First return to the normal F-front orientation.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 0.0,
-    targetPitch: 0.45,
-    duration: const Duration(milliseconds: 700),
-  );
-
-  // Then turn left so R becomes the working face.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: -1.57,
-    targetPitch: 0.45,
-    duration: const Duration(milliseconds: 900),
-  );
-  break;
-
-  case 'F':
-  // Return to the normal F-front orientation.
-  await cubeKey.currentState?.animateCameraTo(
-    targetYaw: 0.0,
-    targetPitch: 0.45,
-    duration: const Duration(milliseconds: 900),
-  );
-  break;
-
-  default:
-    return;
+Future<void> _updateOrientationForMove(String move) async {
+  // Keep the camera at the user's chosen viewing angle.
+  // Face-turn animations will continue normally.
 }
 
-  currentFrontFace = targetFace;
-}
 
-  Widget _buildDirectionArrow(String move) {
-    final targetFace = _targetFaceForMove(move);
-    final instruction = _faceInstruction(targetFace);
 
-    final bool isRight = targetFace == 'R';
-    final bool isLeft = targetFace == 'L';
-    final bool isUp = targetFace == 'U';
-    final bool isDown = targetFace == 'D';
-    final bool isBack = targetFace == 'B';
+  
+Widget _buildDirectionArrow(String move) {
+  final normalizedMove = move.trim().toUpperCase();
+  final isPrime = normalizedMove.endsWith("'");
+  final face = normalizedMove[0];
 
-    return TweenAnimationBuilder<double>(
-      key: ValueKey(
-        '${controller.currentIndex}-$move',
-      ),
-      tween: Tween<double>(
-        begin: 0.0,
-        end: 1.0,
-      ),
-      duration: const Duration(milliseconds: 800),
-      curve: Curves.easeInOut,
-      builder: (context, progress, child) {
-        final double movement =
-            progress <= 0.5
-                ? progress * 2.0
-                : (1.0 - progress) * 2.0;
+  final faceNames = {
+    'R': 'RIGHT',
+    'L': 'LEFT',
+    'U': 'TOP',
+    'D': 'BOTTOM',
+    'F': 'FRONT',
+    'B': 'BACK',
+  };
 
-        Widget arrow;
+  final faceName = faceNames[face] ?? face;
 
-        if (isRight) {
-          arrow = Transform.translate(
-            offset: Offset(
-              18.0 * movement,
-              0,
-            ),
-            child: const Icon(
-              Icons.arrow_forward,
-              color: Colors.white,
-              size: 32,
-            ),
-          );
-        } else if (isLeft) {
-          arrow = Transform.translate(
-            offset: Offset(
-              -18.0 * movement,
-              0,
-            ),
-            child: const Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-              size: 32,
-            ),
-          );
-        } else if (isUp) {
-          arrow = Transform.translate(
-            offset: Offset(
-              0,
-              18.0 * movement,
-            ),
-            child: const Icon(
-              Icons.arrow_downward,
-              color: Colors.white,
-              size: 32,
-            ),
-          );
-        } else if (isDown) {
-          arrow = Transform.translate(
-            offset: Offset(
-              0,
-              -18.0 * movement,
-            ),
-            child: const Icon(
-              Icons.arrow_upward,
-              color: Colors.white,
-              size: 32,
-            ),
-          );
-        } else if (isBack) {
-          arrow = Transform.rotate(
-            angle: 2 * 3.1415926535 * progress,
-            child: const Icon(
-              Icons.threesixty,
-              color: Colors.white,
-              size: 32,
-            ),
-          );
-        } else {
-          arrow = const Icon(
-            Icons.check_circle_outline,
+  final direction = isPrime
+      ? 'COUNTERCLOCKWISE'
+      : 'CLOCKWISE';
+
+  final directionSymbol = isPrime ? '↶' : '↷';
+
+  return Container(
+    padding: const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 10,
+    ),
+    decoration: BoxDecoration(
+      color: Colors.black.withOpacity(0.78),
+      borderRadius: BorderRadius.circular(24),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          normalizedMove,
+          style: const TextStyle(
             color: Colors.white,
-            size: 30,
-          );
-        }
-
-        return Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 10,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.72),
-            borderRadius: BorderRadius.circular(24),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          directionSymbol,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              arrow,
-              const SizedBox(width: 10),
-              Text(
-                instruction,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              faceName,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _waitForAnimationToFinish() async {
-    while (
-        cubeKey.currentState?.cubeModel.isAnimating ?? false) {
-      await Future.delayed(
-        const Duration(milliseconds: 20),
-      );
-
-      if (!mounted) {
-        return;
-      }
-    }
-  }
-
-  Future<void> _processQueue() async {
-    if (_processingQueue) {
-      return;
-    }
-
-    _processingQueue = true;
-
-    try {
-      while (mounted) {
-        await _waitForAnimationToFinish();
-
-        if (!mounted) {
-          return;
-        }
-
-        if (_previousQueue > 0 &&
-    !controller.canGoPrevious) {
-  _previousQueue = 0;
+            ),
+            Text(
+              direction,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }
 
-        // Previous has priority over Next if both are queued.
-        if (_previousQueue > 0 &&
-            controller.canGoPrevious) {
-          _previousQueue--;
+
+
+Future<void> _waitForAnimationToFinish() async {
+  while (cubeKey.currentState?.cubeModel.isAnimating ?? false) {
+    await Future.delayed(
+      const Duration(milliseconds: 20),
+    );
+
+    if (!mounted) return;
+  }
+}
+
+Future<void> _processQueue() async {
+  if (_processingQueue) return;
+
+  _processingQueue = true;
+
+  try {
+    while (mounted) {
+      await _waitForAnimationToFinish();
+
+      if (!mounted) return;
+
+      // Process manual commands in the exact order tapped.
+      if (_commandQueue.isNotEmpty) {
+        final command = _commandQueue.removeAt(0);
+
+        if (command == 'next') {
+          if (!controller.canGoNext) continue;
+
+          final move = controller.nextMove;
+          final cube = cubeKey.currentState;
+
+          if (move == null || cube == null) continue;
+
+          // Update the step number and move label FIRST.
+          controller.markNextApplied();
+          if (mounted) setState(() {});
+
+          await _updateOrientationForMove(move);
+          await cube.animateMove(move);
+        
+          continue;
+        }
+
+        if (command == 'previous') {
+          if (!controller.canGoPrevious) continue;
 
           final move = controller.previousMove;
+          final cube = cubeKey.currentState;
 
-          if (move == null) {
-            continue;
-          }
+          if (move == null || cube == null) continue;
 
-          final reverseMove = _reverseMove(move);
+          // Update the step and move label as the reverse animation starts.
+          controller.markPreviousApplied();
+          if (mounted) setState(() {});
 
-// First reverse the current move while staying on its face.
-await cubeKey.currentState
-    ?.animateMove(reverseMove);
-
-// Now move playback back to the destination step.
-controller.markPreviousApplied();
-
-final destinationMove = controller.currentMove;
-
-if (mounted) {
-  setState(() {});
-}
-
-// Then orient the camera to the destination step.
-await _updateOrientationForMove(destinationMove);
-
+          await cube.animateMove(_reverseMove(move));
+          if (!mounted) return;
           continue;
         }
-
-        if (_nextQueue.isNotEmpty) {
-  final move = _nextQueue.removeAt(0);
-
-  _nextMoveInProgress = true;
-
-  // Update the solution name and step FIRST.
-  controller.markNextApplied();
-
-  if (mounted) {
-    setState(() {});
-  }
-
-  // Then orient the camera.
-  await _updateOrientationForMove(move);
-
-  // Finally perform the cube animation.
-  await cubeKey.currentState?.animateMove(move);
-
-  _nextMoveInProgress = false;
-
-  continue;
-}
-
-        if (_playRequested &&
-            controller.canGoNext) {
-          final move = controller.nextMove;
-
-          if (move == null) {
-            _playRequested = false;
-            controller.stopPlaying();
-            continue;
-          }
-
-          controller.markNextApplied();
-
-if (mounted) {
-  setState(() {});
-}
-
-await _updateOrientationForMove(move);
-
-await cubeKey.currentState
-    ?.animateMove(move);
-
-          continue;
-        }
-
-        break;
       }
-    } finally {
-      _processingQueue = false;
+
+      // Automatic playback runs only after manual commands are drained.
+      if (_playRequested && controller.canGoNext) {
+        final move = controller.nextMove;
+        final cube = cubeKey.currentState;
+
+        if (move == null || cube == null) {
+          _playRequested = false;
+          controller.stopPlaying();
+          continue;
+        }
+
+        // Update the displayed step before animating.
+        controller.markNextApplied();
+        if (mounted) setState(() {});
+
+        await cube.animateMove(move);
+        if (!mounted) return;
+        continue;
+      }
 
       if (!controller.canGoNext) {
         _playRequested = false;
         controller.stopPlaying();
       }
 
-      if (mounted) {
-        setState(() {});
-      }
+      break;
     }
-  }
-
-  void _queueNext() {
-  if (!controller.canGoNext) {
-    return;
-  }
-
-  final queuedIndex =
-    controller.currentIndex + _nextQueue.length;
-
-  if (queuedIndex >= controller.totalMoves) {
-    return;
-  }
-
-  final nextMove = controller.moves[queuedIndex];
-
-  _nextQueue.add(nextMove);
-
-  _processQueue();
-}
-
-void _queuePrevious() {
-  if (!controller.canGoPrevious) {
-    return;
-  }
-
-  // Cancel all automatic/queued forward movement.
-  _playRequested = false;
-  controller.stopPlaying();
-  _nextQueue.clear();
-
-  _previousQueue++;
-
-  _processQueue();
-
-  if (mounted) {
-    setState(() {});
-  }
-}
-
-  void _togglePlayPause() {
-    if (_playRequested) {
-      _playRequested = false;
-      controller.stopPlaying();
-
-      if (mounted) {
-        setState(() {});
-      }
-
-      return;
-    }
-
-    if (!controller.canGoNext) {
-      return;
-    }
-
-    _playRequested = true;
-    controller.startPlaying();
-
-    _processQueue();
+  } finally {
+    _processingQueue = false;
 
     if (mounted) {
       setState(() {});
     }
+
+    // Handle any command that arrived as processing was ending.
+    if (mounted && (_commandQueue.isNotEmpty || _playRequested)) {
+      _processQueue();
+    }
   }
+}
+
+void _queueNext() {
+  _commandQueue.add('next');
+  _processQueue();
+}
+
+void _queuePrevious() {
+  // Previous pauses automatic playback, but does not discard queued taps.
+  _playRequested = false;
+  controller.stopPlaying();
+
+  _commandQueue.add('previous');
+  _processQueue();
+}
+
+void _togglePlayPause() {
+  if (_playRequested) {
+    _playRequested = false;
+    controller.stopPlaying();
+
+    if (mounted) setState(() {});
+    return;
+  }
+
+  if (!controller.canGoNext && _commandQueue.isEmpty) return;
+
+  _playRequested = true;
+  controller.startPlaying();
+
+  _processQueue();
+
+  if (mounted) setState(() {});
+}
 
   @override
   Widget build(BuildContext context) {
@@ -561,8 +376,47 @@ void _queuePrevious() {
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          children: [
-            const SizedBox(height: 20),
+          
+children: [
+  if (_showOrientationHint) ...[
+    Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'Hold your physical cube in the same orientation as shown on the screen.',
+            ),
+          ),
+          IconButton(
+            tooltip: 'Dismiss orientation hint',
+            visualDensity: VisualDensity.compact,
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              setState(() {
+                _showOrientationHint = false;
+              });
+            },
+          ),
+        ],
+      ),
+    ),
+    const SizedBox(height: 12),
+  ] else
+    const SizedBox(height: 20),
 
             Expanded(
               flex: 5,
@@ -575,13 +429,33 @@ void _queuePrevious() {
                         widget.initialCubeString,
                   ),
 
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Material(
+                      color: Colors.black.withValues(alpha: 0.65),
+                      shape: const CircleBorder(),
+                      child: IconButton(
+                        tooltip: 'Reset cube view',
+                        icon: const Icon(
+                          Icons.threed_rotation,
+                          color: Colors.white,
+                        ),
+                        onPressed: _resetCameraView,
+                      ),
+                    ),
+                  ),
+
                   if (hasMoves)
                     Positioned(
                       top: 10,
-                      child: _buildDirectionArrow(
-                        displayedMove,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: _buildDirectionArrow(displayedMove),
                       ),
                     ),
+
                 ],
               ),
             ),

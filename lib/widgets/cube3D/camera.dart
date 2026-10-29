@@ -1,4 +1,6 @@
+
 import 'package:vector_math/vector_math_64.dart';
+import 'dart:math' as math;
 
 class Camera {
   double yaw;
@@ -6,10 +8,10 @@ class Camera {
   double zoom;
 
   Camera({
-  this.yaw = 0.0,
-  this.pitch = 0.45,
-  this.zoom = 230,
-});
+    this.yaw = -0.8,
+    this.pitch = 0.48,
+    this.zoom = 230,
+  });
 
   Matrix4 get matrix {
     return Matrix4.identity()
@@ -18,10 +20,9 @@ class Camera {
   }
 
   void rotate(double dx, double dy) {
-    yaw += dx;
+    final horizontalDirection = math.cos(pitch);
+    yaw += dx * horizontalDirection;
     pitch += dy;
-
-    pitch = pitch.clamp(-1.4, 1.4);
   }
 
   void setOrientation({
@@ -30,7 +31,5 @@ class Camera {
   }) {
     yaw = targetYaw;
     pitch = targetPitch;
-
-    pitch = pitch.clamp(-1.4, 1.4);
   }
 }
